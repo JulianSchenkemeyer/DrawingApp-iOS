@@ -11,7 +11,9 @@
 @implementation CachedLIView
 {
     UIBezierPath *path;
-    UIImage *incrementalImage; // offscreen bitmap for storing a copy of our screen
+    UIImage *incrementalImage;  // offscreen bitmap for storing a copy of our screen
+    CGPoint pts[4];             // four points to create a Bezier segment
+    uint ctr;                   // counter to keep track of point index
 }
 
 - (id)initWithCoder:(NSCoder *)aDecoder
@@ -33,27 +35,35 @@
 
 - (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
 {
+    ctr = 0;                                    // set counter to 0
     UITouch *touch = [touches anyObject];
-    CGPoint p = [touch locationInView:self];    // location
-    [path moveToPoint:p];                       // draw the beginning
+    pts[0] = [touch locationInView:self];       // location
 }
 
 - (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event
 {
     UITouch *touch = [touches anyObject];
-    CGPoint p = [touch locationInView:self];    // location
-    [path addLineToPoint:p];                       // draw a line between the current location and the starting point
-    [self setNeedsDisplay];                     // refresh
+    CGPoint p = [touch locationInView:self];                                        // location
+    ctr++;                                                                          // increment the counter
+    pts[ctr] = p;                                                                   // set new point for Bezier curve
+    
+    if (ctr == 3) {                                                                 // if 4 point are available
+        [path moveToPoint:pts[0]];                                                  // set beginning of the Bezier curve
+        [path addCurveToPoint:pts[3] controlPoint1:pts[1] controlPoint2:pts[2]];    // draw the Bezier curve from pts[0] to pts[3]
+        [self setNeedsDisplay];                                                     // refresh
+        
+        pts[0] = [path currentPoint];                                               // set startpoint for the next Bezier curve
+        ctr = 0;
+    }
 }
 
 - (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
 {
-    UITouch *touch = [touches anyObject];
-    CGPoint p = [touch locationInView:self];    // location
-    [path addLineToPoint:p];
     [self drawBitmap];                          // store the current screen as bitmap
     [self setNeedsDisplay];                     // refresh
+    pts[0] = [path currentPoint];
     [path removeAllPoints];                     // reset the current screen
+    ctr = 0;
 }
 
 - (void)touchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event
