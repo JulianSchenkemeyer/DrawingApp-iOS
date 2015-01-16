@@ -14,6 +14,8 @@
 		B9C7B6871A69834A00533824 /* LinearInterpView.m in Sources */ = {isa = PBXBuildFile; fileRef = B9C7B6861A69834A00533824 /* LinearInterpView.m */; };
 		B9C7B68B1A6990C700533824 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = B9C7B6891A6990C700533824 /* ViewController.m */; };
 		B9C7B68C1A6990C700533824 /* ViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = B9C7B68A1A6990C700533824 /* ViewController.xib */; };
+		B9C7B68F1A69ABA600533824 /* CachedLIView.m in Sources */ = {isa = PBXBuildFile; fileRef = B9C7B68E1A69ABA600533824 /* CachedLIView.m */; };
+		B9C7B6921A69ABD200533824 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = B9C7B6901A69ABD200533824 /* LaunchScreen.xib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -41,6 +43,9 @@
 		B9C7B6881A6990C700533824 /* ViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
 		B9C7B6891A6990C700533824 /* ViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
 		B9C7B68A1A6990C700533824 /* ViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = ViewController.xib; sourceTree = "<group>"; };
+		B9C7B68D1A69ABA600533824 /* CachedLIView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CachedLIView.h; sourceTree = "<group>"; };
+		B9C7B68E1A69ABA600533824 /* CachedLIView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CachedLIView.m; sourceTree = "<group>"; };
+		B9C7B6911A69ABD200533824 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/LaunchScreen.xib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -84,13 +89,16 @@
 			children = (
 				B91C830D1A69109000350802 /* AppDelegate.h */,
 				B91C830E1A69109000350802 /* AppDelegate.m */,
-				B9C7B6851A69834A00533824 /* LinearInterpView.h */,
-				B9C7B6861A69834A00533824 /* LinearInterpView.m */,
-				B91C83161A69109000350802 /* Images.xcassets */,
-				B91C83091A69109000350802 /* Supporting Files */,
 				B9C7B6881A6990C700533824 /* ViewController.h */,
 				B9C7B6891A6990C700533824 /* ViewController.m */,
 				B9C7B68A1A6990C700533824 /* ViewController.xib */,
+				B9C7B68D1A69ABA600533824 /* CachedLIView.h */,
+				B9C7B68E1A69ABA600533824 /* CachedLIView.m */,
+				B9C7B6851A69834A00533824 /* LinearInterpView.h */,
+				B9C7B6861A69834A00533824 /* LinearInterpView.m */,
+				B9C7B6901A69ABD200533824 /* LaunchScreen.xib */,
+				B91C83161A69109000350802 /* Images.xcassets */,
+				B91C83091A69109000350802 /* Supporting Files */,
 			);
 			path = DrawingApp;
 			sourceTree = "<group>";
@@ -202,6 +210,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B9C7B68C1A6990C700533824 /* ViewController.xib in Resources */,
+				B9C7B6921A69ABD200533824 /* LaunchScreen.xib in Resources */,
 				B91C83171A69109000350802 /* Images.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -221,6 +230,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B9C7B6871A69834A00533824 /* LinearInterpView.m in Sources */,
+				B9C7B68F1A69ABA600533824 /* CachedLIView.m in Sources */,
 				B91C830F1A69109000350802 /* AppDelegate.m in Sources */,
 				B9C7B68B1A6990C700533824 /* ViewController.m in Sources */,
 				B91C830C1A69109000350802 /* main.m in Sources */,
@@ -244,6 +254,17 @@
 			targetProxy = B91C83201A69109000350802 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		B9C7B6901A69ABD200533824 /* LaunchScreen.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				B9C7B6911A69ABD200533824 /* Base */,
+			);
+			name = LaunchScreen.xib;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
 		B91C83271A69109000350802 /* Debug */ = {
