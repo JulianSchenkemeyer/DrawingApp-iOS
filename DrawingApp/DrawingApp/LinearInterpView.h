@@ -1,5 +1,5 @@
 //
-//  ViewController.h
+//  LinearInterpView.h
 //  DrawingApp
 //
 //  Created by Julian Schenkemeyer on 16/01/15.
@@ -8,6 +8,6 @@
 
 #import <UIKit/UIKit.h>
 
-@interface ViewController : UIViewController
+@interface LinearInterpView : UIView
 
 @end
