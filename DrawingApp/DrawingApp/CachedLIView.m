@@ -12,7 +12,7 @@
 {
     UIBezierPath *path;
     UIImage *incrementalImage;  // offscreen bitmap for storing a copy of our screen
-    CGPoint pts[4];             // four points to create a Bezier segment
+    CGPoint pts[5];             // four points to create a Bezier segment + one point to smooth out the junction point
     uint ctr;                   // counter to keep track of point index
 }
 
@@ -23,6 +23,16 @@
         [self setBackgroundColor:[UIColor whiteColor]];     // background-color
         path = [UIBezierPath bezierPath];
         [path setLineWidth:2.0];                            // thickness
+    }
+    return self;
+}
+
+- (id)initWithFrame:(CGRect)frame
+{
+    if (self = [super initWithFrame:frame]) {
+        [self setMultipleTouchEnabled:NO];
+        path = [UIBezierPath bezierPath];
+        [path setLineWidth:2.0];
     }
     return self;
 }
@@ -47,13 +57,19 @@
     ctr++;                                                                          // increment the counter
     pts[ctr] = p;                                                                   // set new point for Bezier curve
     
-    if (ctr == 3) {                                                                 // if 4 point are available
+    if (ctr == 4) {                                                                 // if 5 point are available
+        
+        pts[3] = CGPointMake((pts[2].x + pts[4].x)/2.0, (pts[2].y + pts[4].y)/2.0); // find the middle between the second controlpoint and the first controlpoint of the next bezier curve
+        
         [path moveToPoint:pts[0]];                                                  // set beginning of the Bezier curve
         [path addCurveToPoint:pts[3] controlPoint1:pts[1] controlPoint2:pts[2]];    // draw the Bezier curve from pts[0] to pts[3]
+        
         [self setNeedsDisplay];                                                     // refresh
         
-        pts[0] = [path currentPoint];                                               // set startpoint for the next Bezier curve
-        ctr = 0;
+        // setup for the next curve
+        pts[0] = pts[3];
+        pts[1] = pts[4];
+        ctr = 1;
     }
 }
 
@@ -61,7 +77,6 @@
 {
     [self drawBitmap];                          // store the current screen as bitmap
     [self setNeedsDisplay];                     // refresh
-    pts[0] = [path currentPoint];
     [path removeAllPoints];                     // reset the current screen
     ctr = 0;
 }
