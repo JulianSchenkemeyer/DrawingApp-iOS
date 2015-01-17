@@ -11,7 +11,9 @@
 @implementation CachedLIView
 {
     UIBezierPath *path;
-    UIImage *incrementalImage; // offscreen bitmap for storing a copy of our screen
+    UIImage *incrementalImage;  // offscreen bitmap for storing a copy of our screen
+    CGPoint pts[5];             // four points to create a Bezier segment + one point to smooth out the junction point
+    uint ctr;                   // counter to keep track of point index
 }
 
 - (id)initWithCoder:(NSCoder *)aDecoder
@@ -25,6 +27,16 @@
     return self;
 }
 
+- (id)initWithFrame:(CGRect)frame
+{
+    if (self = [super initWithFrame:frame]) {
+        [self setMultipleTouchEnabled:NO];
+        path = [UIBezierPath bezierPath];
+        [path setLineWidth:2.0];
+    }
+    return self;
+}
+
 - (void)drawRect:(CGRect)rect
 {
     [incrementalImage drawInRect:rect];
@@ -33,27 +45,40 @@
 
 - (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
 {
+    ctr = 0;                                    // set counter to 0
     UITouch *touch = [touches anyObject];
-    CGPoint p = [touch locationInView:self];    // location
-    [path moveToPoint:p];                       // draw the beginning
+    pts[0] = [touch locationInView:self];       // location
 }
 
 - (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event
 {
     UITouch *touch = [touches anyObject];
-    CGPoint p = [touch locationInView:self];    // location
-    [path addLineToPoint:p];                       // draw a line between the current location and the starting point
-    [self setNeedsDisplay];                     // refresh
+    CGPoint p = [touch locationInView:self];                                        // location
+    ctr++;                                                                          // increment the counter
+    pts[ctr] = p;                                                                   // set new point for Bezier curve
+    
+    if (ctr == 4) {                                                                 // if 5 point are available
+        
+        pts[3] = CGPointMake((pts[2].x + pts[4].x)/2.0, (pts[2].y + pts[4].y)/2.0); // find the middle between the second controlpoint and the first controlpoint of the next bezier curve
+        
+        [path moveToPoint:pts[0]];                                                  // set beginning of the Bezier curve
+        [path addCurveToPoint:pts[3] controlPoint1:pts[1] controlPoint2:pts[2]];    // draw the Bezier curve from pts[0] to pts[3]
+        
+        [self setNeedsDisplay];                                                     // refresh
+        
+        // setup for the next curve
+        pts[0] = pts[3];
+        pts[1] = pts[4];
+        ctr = 1;
+    }
 }
 
 - (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
 {
-    UITouch *touch = [touches anyObject];
-    CGPoint p = [touch locationInView:self];    // location
-    [path addLineToPoint:p];
     [self drawBitmap];                          // store the current screen as bitmap
     [self setNeedsDisplay];                     // refresh
     [path removeAllPoints];                     // reset the current screen
+    ctr = 0;
 }
 
 - (void)touchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event
