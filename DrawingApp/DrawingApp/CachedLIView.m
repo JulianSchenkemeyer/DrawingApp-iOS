@@ -8,6 +8,8 @@
 
 #import "CachedLIView.h"
 
+#define FUDGE_FACTOR 100
+
 @implementation CachedLIView
 {
     UIBezierPath *path;
@@ -16,23 +18,12 @@
     uint ctr;                   // counter to keep track of point index
 }
 
-- (id)initWithCoder:(NSCoder *)aDecoder
-{
-    if (self = [super initWithCoder:aDecoder]) {
-        [self setMultipleTouchEnabled:NO];                  // We only want the user to be able to draw with one finger
-        [self setBackgroundColor:[UIColor whiteColor]];     // background-color
-        path = [UIBezierPath bezierPath];
-        [path setLineWidth:2.0];                            // thickness
-    }
-    return self;
-}
-
 - (id)initWithFrame:(CGRect)frame
 {
     if (self = [super initWithFrame:frame]) {
-        [self setMultipleTouchEnabled:NO];
+        [self setMultipleTouchEnabled:NO];          // We only want the user to be able to draw with one finger
         path = [UIBezierPath bezierPath];
-        [path setLineWidth:2.0];
+        [path setLineWidth:2.0];                    // thickness
     }
     return self;
 }
@@ -40,7 +31,6 @@
 - (void)drawRect:(CGRect)rect
 {
     [incrementalImage drawInRect:rect];
-    [path stroke];
 }
 
 - (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
@@ -64,9 +54,39 @@
         [path moveToPoint:pts[0]];                                                  // set beginning of the Bezier curve
         [path addCurveToPoint:pts[3] controlPoint1:pts[1] controlPoint2:pts[2]];    // draw the Bezier curve from pts[0] to pts[3]
         
+        // create an offscreen bitmap
+        UIGraphicsBeginImageContextWithOptions(self.bounds.size, YES, 0.0);
+        
+        // if no offscreen bitmap is already available, create one
+        if (!incrementalImage) {
+            UIBezierPath *rectpath = [UIBezierPath bezierPathWithRect:self.bounds];
+            [[UIColor whiteColor] setFill];
+            [rectpath fill];
+        }
+        
+        [incrementalImage drawAtPoint:CGPointZero];
+        [[UIColor blackColor] setStroke];
+        
+        // change stroke width in relation to drawing speed
+        float speed = 0.0;
+        
+        // calculate the drawing speed
+        for (int i = 0; i < 3; i++) {
+            float dx = pts[i+1].x - pts[i].x;
+            float dy = pts[i+1].y - pts[i].y;
+            speed += sqrtf(dx * dx + dy * dy);
+        }
+        
+        float width = FUDGE_FACTOR / speed;
+        
+        [path setLineWidth:width];
+        [path stroke];
+        incrementalImage = UIGraphicsGetImageFromCurrentImageContext();
+        
         [self setNeedsDisplay];                                                     // refresh
         
         // setup for the next curve
+        [path removeAllPoints];
         pts[0] = pts[3];
         pts[1] = pts[4];
         ctr = 1;
@@ -75,10 +95,7 @@
 
 - (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
 {
-    [self drawBitmap];                          // store the current screen as bitmap
     [self setNeedsDisplay];                     // refresh
-    [path removeAllPoints];                     // reset the current screen
-    ctr = 0;
 }
 
 - (void)touchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event
@@ -86,22 +103,6 @@
     [self touchesEnded:touches withEvent:event];
 }
 
-- (void)drawBitmap
-{
-    UIGraphicsBeginImageContextWithOptions(self.bounds.size, YES, 0.0);
-    [[UIColor blackColor] setStroke];
-    if (!incrementalImage) {                                                        // if this is the first drawing, create the first
-        // create white background
-        UIBezierPath *rectpath = [UIBezierPath bezierPathWithRect:self.bounds];
-        [[UIColor whiteColor] setFill];
-        [rectpath fill];
-    }
-    // create bitmap from current screen
-    [incrementalImage drawAtPoint:CGPointZero];
-    [path stroke];
-    incrementalImage = UIGraphicsGetImageFromCurrentImageContext();
-    UIGraphicsEndImageContext();
-}
 /*
 // Only override drawRect: if you perform custom drawing.
 // An empty implementation adversely affects performance during animation.
