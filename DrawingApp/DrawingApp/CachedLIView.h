@@ -1,5 +1,5 @@
 //
-//  LinearInterpView.h
+//  CachedLIView.h
 //  DrawingApp
 //
 //  Created by Julian Schenkemeyer on 16/01/15.
@@ -8,6 +8,6 @@
 
 #import <UIKit/UIKit.h>
 
-@interface LinearInterpView : UIView
+@interface CachedLIView : UIView
 
 @end
