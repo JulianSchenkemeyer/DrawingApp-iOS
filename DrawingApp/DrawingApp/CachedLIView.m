@@ -8,8 +8,16 @@
 
 #import "CachedLIView.h"
 
-#define FUDGE_FACTOR 100
 #define BUFFCAP 100
+#define FF .2
+#define LOWER 0.01
+#define UPPER 1.0
+
+typedef struct
+{
+    CGPoint firstPoint;
+    CGPoint secondPoint;
+} LineSegment;
 
 @implementation CachedLIView
 {
@@ -20,6 +28,9 @@
     CGPoint pointsBuffer[BUFFCAP];
     uint buffIndex;
     dispatch_queue_t drawingQueue;
+    
+    BOOL isFirstTouchPoint;
+    LineSegment lastSegmentOfPrev;
 }
 
 - (id)initWithFrame:(CGRect)frame
@@ -42,6 +53,7 @@
     buffIndex = 0;
     UITouch *touch = [touches anyObject];
     pts[0] = [touch locationInView:self];       // location
+    isFirstTouchPoint = YES;
 }
 
 - (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event
@@ -66,11 +78,33 @@
             if (buffIndex == 0) {
                 return;
             }
-            UIBezierPath *path = [UIBezierPath bezierPath];
+            UIBezierPath *offsetPath = [UIBezierPath bezierPath];
+            
+            LineSegment ls[4];
             for (int i = 0; i < buffIndex; i += 4) {
-                // draw bezier curve
-                [path moveToPoint:pointsBuffer[i]];
-                [path addCurveToPoint:pointsBuffer[i+3] controlPoint1:pointsBuffer[i+1] controlPoint2:pointsBuffer[i+2]];
+                if (isFirstTouchPoint) {
+                    ls[0] = (LineSegment){pointsBuffer[0], pointsBuffer[0]};
+                    [offsetPath moveToPoint:ls[0].firstPoint];
+                    isFirstTouchPoint = NO;
+                } else {
+                    ls[0] = lastSegmentOfPrev;
+                }
+                
+                float frac1 = FF/clamp(len_sq(pointsBuffer[i], pointsBuffer[i+1]), LOWER, UPPER);
+                float frac2 = FF/clamp(len_sq(pointsBuffer[i+1], pointsBuffer[i+2]), LOWER, UPPER);
+                float frac3 = FF/clamp(len_sq(pointsBuffer[i+2], pointsBuffer[i+3]), LOWER, UPPER);
+                ls[1] = [self lineSegmentPerpendicularTo:(LineSegment){pointsBuffer[i], pointsBuffer[i+1]} ofRelativeLength:frac1];
+                ls[2] = [self lineSegmentPerpendicularTo:(LineSegment){pointsBuffer[i+1], pointsBuffer[i+2]} ofRelativeLength:frac2];
+                ls[3] = [self lineSegmentPerpendicularTo:(LineSegment){pointsBuffer[i+2], pointsBuffer[i+3]} ofRelativeLength:frac3];
+                
+                // draw bezier curves
+                [offsetPath moveToPoint:ls[0].firstPoint];
+                [offsetPath addCurveToPoint:ls[3].firstPoint controlPoint1:ls[1].firstPoint controlPoint2:ls[2].firstPoint];
+                [offsetPath addLineToPoint:ls[3].secondPoint];
+                [offsetPath addCurveToPoint:ls[0].secondPoint controlPoint1:ls[2].secondPoint controlPoint2:ls[1].secondPoint];
+                [offsetPath closePath];
+                
+                lastSegmentOfPrev = ls[3];
             }
             
             // create an offscreen bitmap
@@ -85,21 +119,10 @@
             
             [incrementalImage drawAtPoint:CGPointZero];
             [[UIColor blackColor] setStroke];
+            [[UIColor blackColor] setFill];
+            [offsetPath stroke];
+            [offsetPath fill];
             
-            // change stroke width in relation to drawing speed
-            float speed = 0.0;
-            
-            // calculate the drawing speed
-            for (int i = 0; i < 3; i++) {
-                float dx = pts[i+1].x - pts[i].x;
-                float dy = pts[i+1].y - pts[i].y;
-                speed += sqrtf(dx * dx + dy * dy);
-            }
-            
-            float width = FUDGE_FACTOR / speed;
-            
-            [path setLineWidth:width];
-            [path stroke];
             incrementalImage = UIGraphicsGetImageFromCurrentImageContext();
             UIGraphicsEndImageContext();
             
@@ -124,6 +147,40 @@
 - (void)touchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event
 {
     [self touchesEnded:touches withEvent:event];
+}
+
+
+
+-(LineSegment) lineSegmentPerpendicularTo: (LineSegment)pp ofRelativeLength:(float)fraction
+{
+    CGFloat x0 = pp.firstPoint.x, y0 = pp.firstPoint.y, x1 = pp.secondPoint.x, y1 = pp.secondPoint.y;
+    
+    CGFloat dx, dy;
+    dx = x1 - x0;
+    dy = y1 - y0;
+    
+    CGFloat xa, ya, xb, yb;
+    xa = x1 + fraction/2 * dy;
+    ya = y1 - fraction/2 * dx;
+    xb = x1 - fraction/2 * dy;
+    yb = y1 + fraction/2 * dx;
+    
+    return (LineSegment){ (CGPoint){xa, ya}, (CGPoint){xb, yb} };
+    
+}
+
+float len_sq(CGPoint p1, CGPoint p2)
+{
+    float dx = p2.x - p1.x;
+    float dy = p2.y - p1.y;
+    return dx * dx + dy * dy;
+}
+
+float clamp(float value, float lower, float higher)
+{
+    if (value < lower) return lower;
+    if (value > higher) return higher;
+    return value;
 }
 
 /*
